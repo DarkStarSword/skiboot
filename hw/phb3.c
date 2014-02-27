@@ -3832,7 +3832,10 @@ static void phb3_init_utl(struct phb3 *p)
 	/* Init_82: PCI Express port control
 	 * SW283991: Set Outbound Non-Posted request timeout to 16ms (RTOS).
 	 */
-	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588007000000000);
+	/*out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588007000000000);*/
+
+	/* infinite timeout for outbound transactions */
+	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588000000000000);
 
 	/* Init_83..85: Clean & setup port errors */
 	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xffdfffffffffffff);
@@ -4128,13 +4131,19 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	if (p->rev == PHB3_REV_MURANO_DD20)
 		phb3_write_reg_asb(p, PHB_TCE_WATERMARK,	0x0003000000030302);
 
-	/* Init_142 - PHB3 - Timeout Control Register 1
-	 * SW283991: Increase timeouts
-	 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1715152016200000);
+	if ((p->chip_id == 0 && p->index == 0) || (p->chip_id == 1 && p->index == 0)) {
 
-	/* Init_143 - PHB3 - Timeout Control Register 2 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000);
+		printf("Disabling timeouts for paladium on chip %d phb %d\n", p->chip_id, p->index);
+		/* Init_142 - PHB3 - Timeout Control Register 1 */
+		out_be64(p->regs + PHB_TIMEOUT_CTRL1,		   0x2020202020200000);
+		/* Init_143 - PHB3 - Timeout Control Register 2 */
+		out_be64(p->regs + PHB_TIMEOUT_CTRL2,		   0x2320E02000000000);
+	} else {
+		/* Init_142 - PHB3 - Timeout Control Register 1 */
+		out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1715152016200000);
+		/* Init_143 - PHB3 - Timeout Control Register 2 */
+		out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000);
+	}
 
 	/* Mark the PHB as functional which enables all the various sequences */
 	p->state = PHB3_STATE_FUNCTIONAL;
