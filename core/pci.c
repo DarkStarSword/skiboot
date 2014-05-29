@@ -147,12 +147,20 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 		if (vdid != 0xffff0001)
 			break;
 		had_crs = true;
-		time_wait_ms(100);
+		if (phb->opal_id == 0 && ((bdfn >> 8) == 1))
+			time_wait_ms(1000);
+		else
+			time_wait_ms(100);
 	}
 	if (vdid == 0xffff0001) {
 		PCIERR(phb, bdfn, "CRS timeout !\n");
 		return NULL;
 	}
+	
+	if (phb->opal_id == 0) {
+		printf("got vendor id: %x\n", vdid);
+	}
+
 	if (had_crs)
 		PCIDBG(phb, bdfn, "Probe success after CRS\n");
 	pd = zalloc(sizeof(struct pci_device));
