@@ -3313,6 +3313,10 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	reg |= 0x0070000000000000;
 	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL,reg);
 	PHBINF(p, "CAPP: port attached\n");
+	/*xscom_write(p->chip_id, APC_MASTER_PB_CTRL, 	0x10000000000000FF);*/
+	/* dma mode bits 10:11 must be 01 */
+	/*xscom_write(p->chip_id, APC_MASTER_PB_CTRL, 	0x10500000010c00db);  in use*/
+	/*xscom_write(p->chip_id, APC_MASTER_CONFIG, 	0x4070000000000000); */
 
 	/* tlb and mmio */
 	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000104000000);
@@ -3339,7 +3343,9 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
 	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa000000000000000);
 	printf("not telling pb to snoop\n");
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x2000000000000000);
+	/*xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x2000000000000000);*/
+	/* dma mode bits 38:39 must be 01 */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa5f0000055000000);
 }
 
 /* override some inits with CAPI defaults */
