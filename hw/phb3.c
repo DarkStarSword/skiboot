@@ -3280,6 +3280,12 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 static void phb3_init_capp_regs(struct phb3 *p)
 {
 	uint64_t reg;
+	uint64_t data;
+#if 0
+	printf("Returning before init_capp_regs\n");
+	return;
+#endif
+	printf("doing init_capp_regs\n");
 
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL, &reg);
 	reg |= PPC_BIT(3);
@@ -3310,19 +3316,30 @@ static void phb3_init_capp_regs(struct phb3 *p)
 
 	/* tlb and mmio */
 	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000104000000);
+	/*printf("return after transport_control\n");*/
+	/* good so far */
 
 	xscom_write(p->chip_id, CANNED_PRESP_MAP0, 	0);
 	xscom_write(p->chip_id, CANNED_PRESP_MAP1, 	0xFFFFFFFF00000000);
 	xscom_write(p->chip_id, CANNED_PRESP_MAP2, 	0);
+	/*printf("returning after canned_presp_map2\n");*/
+	/* still good */
 
 	/* error recovery */
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &data);
+	printf("err_status_and_ctrl: %llx\n", data);
+	printf("not writing 0 to capp_err_status_ctrl\n");
+/*	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);*/
+/*	printf("Returning after capp_err_status_ctrl\n");*/
 
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP,   	0x1DC20B6600000000);
 	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL, 	0xC0000000FFF0FFE0);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG1, 	0xB188280728000000);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2, 	0xB188400F00000000);
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
+	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
+	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa000000000000000);
+	printf("not telling pb to snoop\n");
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x2000000000000000);
 }
 
 /* override some inits with CAPI defaults */
@@ -3407,7 +3424,8 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_HARDWARE;
 	}
 
-	xscom_write(p->chip_id, p->spci_xscom + 0x3, 0x8000000000000000ull);
+	printf("enabling dma capp mode\n");
+	xscom_write(p->chip_id, p->spci_xscom + 0x3, 0xc000000000000000ull);
 	/* FIXME security timer bar
 	xscom_write(p->chip_id, p->spci_xscom + 0x4, 0x8000000000000000ull);
 	*/
