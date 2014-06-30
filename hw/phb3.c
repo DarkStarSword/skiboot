@@ -3332,8 +3332,8 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/* error recovery */
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &data);
 	printf("err_status_and_ctrl: %llx\n", data);
-	printf("not writing 0 to capp_err_status_ctrl\n");
-/*	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);*/
+	printf("NOT writing 0 to capp_err_status_ctrl\n");
+	/*xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);*/
 /*	printf("Returning after capp_err_status_ctrl\n");*/
 
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP,   	0x1DC20B6600000000);
@@ -3345,7 +3345,7 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	printf("not telling pb to snoop\n");
 	/*xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x2000000000000000);*/
 	/* dma mode bits 38:39 must be 01 */
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa5f0000055000000);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x25f0000055000000);
 }
 
 /* override some inits with CAPI defaults */
@@ -3355,6 +3355,17 @@ static void phb3_init_capp_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3fe08f8dc700f);
 	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0xffff57fbff01ffde);
 	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcffe0fbff7ff0ec);
+}
+
+static void phb3_lab_capp_firs(struct phb3 *p)
+{
+	printf("setting lab capp FIRs to checkstop on errors\n");
+	xscom_write(p->chip_id, 0x2013003, 0);
+	xscom_write(p->chip_id, 0x2013004, 0);
+	xscom_write(p->chip_id, 0x2013005, 0);
+	xscom_write(p->chip_id, 0x2013006, 0);
+	xscom_write(p->chip_id, 0x2013007, 0);
+
 }
 
 static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
@@ -3386,6 +3397,8 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 	chip->capp_phb3_attached_mask = 1 << p->index;
 	unlock(&capi_lock);
+
+	phb3_lab_capp_firs(p);
 
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
 	if ((reg & PPC_BIT(5))) {
@@ -3471,7 +3484,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	/* set tve no translate mode allow mmio window */
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
 	/* Allow address range 0x0002000000000000: 0x0002FFFFFFFFFFF */
-	p->tve_cache[pe_number * 2] = 0x000000FFFFFF0a00ULL;
+	p->tve_cache[pe_number * 2] = 0x000000FFFFFF1000ULL;
 
 	phb3_ioda_sel(p, IODA2_TBL_TVT, 0, true);
 	for (i = 0; i < ARRAY_SIZE(p->tve_cache); i++)
