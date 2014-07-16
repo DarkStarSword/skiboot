@@ -3342,10 +3342,10 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2, 	0xB188400F00000000);
 	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
 	// xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa000000000000000);
-	printf("not telling pb to snoop\n");
+	printf("telling pb to snoop tlbie\n");
 	/*xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x2000000000000000);*/
 	/* dma mode bits 38:39 must be 01 */
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x25f0000055000000);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xa5f0000055000000);
 }
 
 /* override some inits with CAPI defaults */
