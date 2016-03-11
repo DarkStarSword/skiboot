@@ -2314,6 +2314,9 @@ static struct {
 
 #define CAPP_UCODE_MAX_SIZE 0x20000
 
+#define CAPP_UCODE_LOADED(chip, p) \
+	 ((chip)->capp_ucode_loaded & (1 << (p)->index))
+
 static int64_t capp_lid_download(void)
 {
 	int64_t ret;
@@ -2346,11 +2349,15 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	struct capp_ucode_data *data;
 	struct capp_lid_hdr *lid;
 	uint64_t rc, val, addr;
-	uint32_t chunk_count, offset;
+	uint32_t chunk_count, offset, reg_offset;
 	int i;
 
-	if (chip->capp_ucode_loaded)
+	if (CAPP_UCODE_LOADED(chip, p))
 		return OPAL_SUCCESS;
+
+	/* Return if PHB not attached to a CAPP unit */
+	if (p->index > PHB3_MAX_CAPP_PHB_INDEX(p))
+		return OPAL_HARDWARE;
 
 	rc = capp_lid_download();
 	if (rc)
@@ -2379,6 +2386,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 		    return OPAL_HARDWARE;
 	}
 
+	reg_offset = PHB3_CAPP_REG_OFFSET(p);
 	offset = 0;
 	while (offset < be64_to_cpu(ucode->data_size)) {
 		data = (struct capp_ucode_data *)
@@ -2394,22 +2402,26 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 		switch (data->hdr.reg) {
 		case apc_master_cresp:
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG,
+			xscom_write(p->chip_id,
+				    CAPP_APC_MASTER_ARRAY_ADDR_REG + reg_offset,
 				    0);
 			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
 			break;
 		case apc_master_uop_table:
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG,
+			xscom_write(p->chip_id,
+				    CAPP_APC_MASTER_ARRAY_ADDR_REG + reg_offset,
 				    0x180ULL << 52);
 			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
 			break;
 		case snp_ttype:
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG,
+			xscom_write(p->chip_id,
+				    CAPP_SNP_ARRAY_ADDR_REG + reg_offset,
 				    0x5000ULL << 48);
 			addr = CAPP_SNP_ARRAY_WRITE_REG;
 			break;
 		case snp_uop_table:
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG,
+			xscom_write(p->chip_id,
+				    CAPP_SNP_ARRAY_ADDR_REG + reg_offset,
 				    0x4000ULL << 48);
 			addr = CAPP_SNP_ARRAY_WRITE_REG;
 			break;
@@ -2419,11 +2431,11 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 		for (i = 0; i < chunk_count; i++) {
 			val = be64_to_cpu(data->data[i]);
-			xscom_write(p->chip_id, addr, val);
+			xscom_write(p->chip_id, addr + reg_offset, val);
 		}
 	}
 
-	chip->capp_ucode_loaded = true;
+	chip->capp_ucode_loaded |= (1 << p->index);
 	return OPAL_SUCCESS;
 }
 
@@ -3343,7 +3355,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	int i;
 	u8 mask;
 
-	if (!chip->capp_ucode_loaded) {
+	if (!CAPP_UCODE_LOADED(chip, p)) {
 		PHBERR(p, "CAPP: ucode not loaded\n");
 		return OPAL_RESOURCE;
 	}

@@ -314,6 +314,13 @@ struct phb3 {
 	struct phb		phb;
 };
 
+#define PHB3_IS_NAPLES(p) ((p)->rev == PHB3_REV_NAPLES_DD10)
+
+#define PHB3_MAX_CAPP_PHB_INDEX(p) (PHB3_IS_NAPLES(p) ? 1 : 2)
+
+#define PHB3_CAPP_REG_OFFSET(p) \
+	((p)->index && PHB3_IS_NAPLES(p) ? CAPP1_REG_OFFSET : 0x0)
+
 static inline struct phb3 *phb_to_phb3(struct phb *phb)
 {
 	return container_of(phb, struct phb3, phb);
