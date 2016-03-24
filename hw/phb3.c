@@ -3456,10 +3456,16 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 
 	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_ON) {
+#if 0 /* PSL */
 		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
 			    0x0000000000000000);
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
 			    0xA1F0000000000000);
+#else /* XSL? */
+		printf("NOT writing 0 to capp_err_status_ctrl\n"); /* Why - is this causing the hard lock up? */
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
+			    0xA5F0000055000000);
+#endif
 		return OPAL_SUCCESS;
 	}
 
