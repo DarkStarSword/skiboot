@@ -3356,8 +3356,8 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/* error recovery */
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &data);
 	printf("err_status_and_ctrl: %llx\n", data);
-	printf("NOT writing 0 to capp_err_status_ctrl\n");
-	/*xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);*/
+	printf("writing 0 to capp_err_status_ctrl\n");
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
 /*	printf("Returning after capp_err_status_ctrl\n");*/
 
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset, 0x1DC20B6600000000);
@@ -3456,9 +3456,9 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 
 	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_ON) {
-#if 0 /* PSL */
 		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
 			    0x0000000000000000);
+#if 0 /* PSL */
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
 			    0xA1F0000000000000);
 #else /* XSL? */
