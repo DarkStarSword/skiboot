@@ -3312,7 +3312,8 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/* For an XSL, dma mode bits 10:11 must be 01: */
 	reg &= ~PPC_BIT(10);
 	reg |= PPC_BIT(11);
-	// xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
+	reg |= PPC_BIT(9);
+	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 	/* dma mode bits 10:11 must be 01 */
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, 0x10500000010c00db);
 
@@ -3355,12 +3356,6 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/*printf("returning after canned_presp_map2\n");*/
 	/* still good */
 
-	/* error recovery */
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &data);
-	printf("err_status_and_ctrl: %llx\n", data);
-	printf("writing 0 to capp_err_status_ctrl\n");
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
-/*	printf("Returning after capp_err_status_ctrl\n");*/
 
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset, 0x1DC20B6600000000);
 	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL + offset, 0xC0000000FFF0FFE0);
@@ -3371,6 +3366,12 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	printf("telling pb to snoop tlbie\n");
 	/*xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0x2000000000000000);*/
 	/* dma mode bits 38:39 must be 01 */
+	/* error recovery */
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &data);
+	printf("err_status_and_ctrl: %llx\n", data);
+	printf("writing 0 to capp_err_status_ctrl\n");
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
+/*	printf("Returning after capp_err_status_ctrl\n");*/
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xa5f0000055000000);
 }
 
@@ -3532,7 +3533,9 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	/* set tve no translate mode allow mmio window */
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
 	/* Allow address range 0x0002000000000000: 0x0002FFFFFFFFFFF */
-	p->tve_cache[pe_number * 2] = 0x000000FFFFFF1000ULL;
+	p->tve_cache[pe_number * 2] = 0x000000FFFFFF0a00ULL;
+	// p->tve_cache[pe_number * 2] = 0x000000FFFFFF1000ULL;
+	// p->tve_cache[pe_number * 2] = 0x000000FFFFFF1a00ULL;
 
 	phb3_ioda_sel(p, IODA2_TBL_TVT, 0, true);
 	for (i = 0; i < ARRAY_SIZE(p->tve_cache); i++)
