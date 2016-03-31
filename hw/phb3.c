@@ -3310,8 +3310,11 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
 	reg |= PPC_BIT(3);
 	/* For an XSL, dma mode bits 10:11 must be 01: */
+	reg &= ~PPC_BIT(10);
 	reg |= PPC_BIT(11);
-	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
+	// xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
+	/* dma mode bits 10:11 must be 01 */
+	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, 0x10500000010c00db);
 
 	/* Dynamically workout which PHB to connect to port 0 of the CAPP.
 	 * Here is the table from the CAPP workbook:
@@ -3340,9 +3343,6 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL + offset, reg);
 	PHBINF(p, "CAPP: port attached\n");
 	/*xscom_write(p->chip_id, APC_MASTER_PB_CTRL, 	0x10000000000000FF);*/
-	/* dma mode bits 10:11 must be 01 */
-	/*xscom_write(p->chip_id, APC_MASTER_PB_CTRL, 	0x10500000010c00db);  in use*/
-	/*xscom_write(p->chip_id, APC_MASTER_CONFIG, 	0x4070000000000000); */
 
 	/* tlb and mmio */
 	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x4028000104000000);
