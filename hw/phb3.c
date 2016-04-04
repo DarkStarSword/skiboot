@@ -3369,8 +3369,8 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/* error recovery */
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &data);
 	printf("err_status_and_ctrl: %llx\n", data);
-	printf("writing 0 to capp_err_status_ctrl\n");
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
+	printf("NOT writing 0 to capp_err_status_ctrl\n");
+	// xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
 /*	printf("Returning after capp_err_status_ctrl\n");*/
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xa5f0000055000000);
 }
