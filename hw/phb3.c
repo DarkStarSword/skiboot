@@ -3532,8 +3532,8 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 
 	/* set tve no translate mode allow mmio window */
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
-	/* Allow address range 0x0002000000000000: 0x0002FFFFFFFFFFF */
-	p->tve_cache[pe_number * 2] = 0x000000FFFFFF0a00ULL;
+	/* Allow address range 0x0000000000000000: 0x0002FFFFFFFFFFF */
+	p->tve_cache[pe_number * 2] = 0x000000FFFFFF0200ULL;
 	// p->tve_cache[pe_number * 2] = 0x000000FFFFFF1000ULL;
 	// p->tve_cache[pe_number * 2] = 0x000000FFFFFF1a00ULL;
 
